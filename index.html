@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Personal Habit Tracker</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        color: #333;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .header {
+        text-align: center;
+        color: white;
+        margin-bottom: 30px;
+      }
+
+      .header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+      }
+
+      .auth-container {
+        max-width: 400px;
+        margin: 100px auto;
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        text-align: center;
+      }
+
+      .auth-container h3 {
+        color: #2c3e50;
+        margin-bottom: 1rem;
+      }
+
+      .auth-container p {
+        color: #6c757d;
+        margin-bottom: 1.5rem;
+      }
+
+      .input-group {
+        margin-bottom: 1rem;
+      }
+
+      .input-group input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e9ecef;
+        border-radius: 6px;
+        font-size: 16px;
+        transition: border-color 0.3s;
+      }
+
+      .input-group input:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      .btn {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background 0.3s;
+        width: 100%;
+      }
+
+      .btn:hover {
+        background: #5a6fd8;
+      }
+
+      .btn-secondary {
+        background: #6c757d;
+      }
+
+      .btn-secondary:hover {
+        background: #5a6268;
+      }
+
+      .main-content {
+        display: none;
+      }
+
+      .goals-section {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .goals-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+      }
+
+      .goal-card {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+      }
+
+      .goal-card h4 {
+        color: #2c3e50;
+        margin-bottom: 1rem;
+      }
+
+      .goal-card ul {
+        color: #34495e;
+        padding-left: 1.2rem;
+      }
+
+      .goal-card li {
+        margin-bottom: 0.5rem;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 2rem;
+      }
+
+      .sidebar {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        height: fit-content;
+      }
+
+      .sidebar h3 {
+        margin-bottom: 1rem;
+        color: #2c3e50;
+      }
+
+      .habit-item {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .habit-item:hover {
+        background: #e9ecef;
+        border-color: #667eea;
+      }
+
+      .habit-item.selected {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+      }
+
+      .habit-status {
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+      }
+
+      .main-area {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+
+      .metric-card {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        text-align: center;
+        border: 1px solid #dee2e6;
+      }
+
+      .metric-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #667eea;
+      }
+
+      .metric-label {
+        color: #6c757d;
+        margin-top: 0.5rem;
+      }
+
+      .habit-detail {
+        display: none;
+      }
+
+      .habit-detail.active {
+        display: block;
+      }
+
+      .atomic-habits {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .atomic-card {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+      }
+
+      .atomic-card h5 {
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+      }
+
+      .atomic-card p {
+        color: #6c757d;
+        font-size: 0.9rem;
+      }
+
+      .filter-section {
+        margin-bottom: 1rem;
+      }
+
+      .filter-section select,
+      .filter-section input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        margin-bottom: 0.5rem;
+      }
+
+      .error {
+        color: #dc3545;
+        margin-top: 0.5rem;
+      }
+
+      .success {
+        color: #28a745;
+        margin-top: 0.5rem;
+      }
+
+      @media (max-width: 768px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        .goals-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .metrics-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .atomic-habits {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Authentication Screen -->
+      <div id="auth-screen" class="auth-container">
+        <h3>🎯 Personal Habit Tracker</h3>
+        <p>Please enter the password to access your dashboard</p>
+        <div class="input-group">
+          <input
+            type="password"
+            id="password-input"
+            placeholder="Enter password"
+          />
+        </div>
+        <button class="btn" onclick="authenticate()">
+          🔓 Access Dashboard
+        </button>
+        <div id="auth-message"></div>
+      </div>
+
+      <!-- Main Content -->
+      <div id="main-content" class="main-content">
+        <div class="header">
+          <h1>🎯 Personal Habit Tracker</h1>
+        </div>
+
+        <!-- Goals Section -->
+        <div class="goals-section">
+          <h2>🎯 Goals</h2>
+          <div class="goals-grid">
+            <div class="goal-card">
+              <h4>🎯 Long-term Goals (1.5 Years)</h4>
+              <ul>
+                <li>Live more consciously</li>
+                <li>Be rested and feel fit</li>
+                <li>Better focus</li>
+                <li>Engage in meaningful relations</li>
+              </ul>
+            </div>
+            <div class="goal-card">
+              <h4>⚡ Short-term Goals (This Month)</h4>
+              <ul>
+                <li>Daily reflection journal consistency</li>
+                <li>Implement structured rest periods</li>
+                <li>Practice active listening in conversations</li>
+                <li>Track energy levels and sleep quality</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="layout">
+          <!-- Sidebar -->
+          <div class="sidebar">
+            <h3>📋 Habits</h3>
+            <button
+              class="btn btn-secondary"
+              onclick="logout()"
+              style="margin-bottom: 1rem"
+            >
+              🚪 Logout
+            </button>
+            <button
+              class="btn"
+              onclick="showAddHabit()"
+              style="margin-bottom: 1rem"
+            >
+              ➕ Add New Habit
+            </button>
+
+            <div class="filter-section">
+              <select id="category-filter" onchange="filterHabits()">
+                <option value="">All Categories</option>
+              </select>
+              <select id="status-filter" onchange="filterHabits()">
+                <option value="">All Status</option>
+                <option value="completed">Completed</option>
+                <option value="in_progress">In Progress</option>
+                <option value="pending">Pending</option>
+              </select>
+            </div>
+
+            <button
+              class="btn"
+              onclick="showDashboard()"
+              style="margin-bottom: 1rem"
+            >
+              🏠 Main Dashboard
+            </button>
+
+            <div id="habits-list"></div>
+          </div>
+
+          <!-- Main Area -->
+          <div class="main-area">
+            <!-- Dashboard View -->
+            <div id="dashboard-view">
+              <h3>📊 Dashboard Overview</h3>
+              <div class="metrics-grid">
+                <div class="metric-card">
+                  <div class="metric-value" id="active-habits">7</div>
+                  <div class="metric-label">Active Habits</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-value" id="completion-rate">43%</div>
+                  <div class="metric-label">Completion Rate</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-value" id="avg-sleep">7.2 hrs</div>
+                  <div class="metric-label">Average Sleep</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-value" id="reflection-streak">0 days</div>
+                  <div class="metric-label">Reflection Streak</div>
+                </div>
+              </div>
+              <h3>📅 Today's Habits</h3>
+              <div id="todays-habits"></div>
+            </div>
+
+            <!-- Habit Detail View -->
+            <div id="habit-detail-view" class="habit-detail">
+              <div id="habit-detail-content"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Sample data (same as your Streamlit app)
+      const SAMPLE_HABITS = [
+        {
+          id: 1,
+          name: "Daily Reflection (10 min)",
+          category: "Personal Growth",
+          emoji: "🪞",
+          status: "pending",
+          streak: 0,
+          target_time: "Evening",
+          cue: "After dinner, see journal on nightstand",
+          craving: "Feel peaceful and gain clarity about the day",
+          response: "Write 3 things that went well and 1 thing to improve",
+          reward: "Feel accomplished and ready for restful sleep",
+        },
+        {
+          id: 2,
+          name: "Scheduled Rest Periods",
+          category: "Well-being",
+          emoji: "😌",
+          status: "pending",
+          streak: 0,
+          target_time: "Throughout day",
+          cue: "Phone alarm every 2 hours during work",
+          craving: "Feel refreshed and prevent burnout",
+          response: "Take 10-15 min break: walk, stretch, or breathe",
+          reward: "Feel energized and more focused",
+        },
+        {
+          id: 3,
+          name: "Quality Sleep (7-8 hours)",
+          category: "Health",
+          emoji: "😴",
+          status: "completed",
+          streak: 3,
+          target_time: "Night",
+          cue: "Phone charging station outside bedroom at 10 PM",
+          craving: "Feel rested and have energy for tomorrow",
+          response: "Go to bed by 10:30 PM, no screens",
+          reward: "Wake up naturally feeling refreshed",
+        },
+        {
+          id: 4,
+          name: "Active Listening Practice",
+          category: "Communication",
+          emoji: "👂",
+          status: "in_progress",
+          streak: 1,
+          target_time: "During conversations",
+          cue: "Someone starts speaking to me",
+          craving: "Build deeper connections and understanding",
+          response: "Put away distractions, make eye contact, ask questions",
+          reward: "Feel more connected and gain new insights",
+        },
+        {
+          id: 5,
+          name: "Marathon Training",
+          category: "Fitness",
+          emoji: "🏃‍♂️",
+          status: "completed",
+          streak: 12,
+          target_time: "Morning",
+          cue: "Running shoes by the door, alarm at 6 AM",
+          craving: "Feel strong and make progress toward 4th marathon",
+          response: "Follow training plan: run 30-60 minutes",
+          reward: "Post-run endorphins and track progress in app",
+        },
+        {
+          id: 6,
+          name: "Focus Work Sessions",
+          category: "Productivity",
+          emoji: "🎯",
+          status: "in_progress",
+          streak: 2,
+          target_time: "Work hours",
+          cue: "Start work, see clean desk and closed distractions",
+          craving: "Feel productive and make meaningful progress",
+          response: "Work in 25-min focused blocks with clear goals",
+          reward: "Check off completed tasks and feel accomplished",
+        },
+        {
+          id: 7,
+          name: "Social Connection Check-in",
+          category: "Relationships",
+          emoji: "💬",
+          status: "pending",
+          streak: 0,
+          target_time: "Weekly",
+          cue: "Sunday evening calendar reminder",
+          craving: "Feel connected and maintain meaningful relationships",
+          response: "Call or message 2-3 close friends/family",
+          reward: "Feel supported and enjoy meaningful conversations",
+        },
+      ];
+
+      // App state
+      let habits = JSON.parse(localStorage.getItem("habits")) || SAMPLE_HABITS;
+      let selectedHabit = null;
+      let currentView = "dashboard";
+
+      // Initialize app
+      function init() {
+        updateHabitsList();
+        updateDashboard();
+        populateCategoryFilter();
+      }
+
+      // Authentication
+      function authenticate() {
+        const password = document.getElementById("password-input").value;
+        const messageEl = document.getElementById("auth-message");
+
+        if (password === "pass8") {
+          document.getElementById("auth-screen").style.display = "none";
+          document.getElementById("main-content").style.display = "block";
+          messageEl.innerHTML =
+            '<div class="success">✅ Access granted! Welcome to your habit tracker.</div>';
+          localStorage.setItem("authenticated", "true");
+          init();
+        } else {
+          messageEl.innerHTML =
+            '<div class="error">❌ Incorrect password. Please try again.</div>';
+        }
+      }
+
+      // Logout
+      function logout() {
+        document.getElementById("auth-screen").style.display = "block";
+        document.getElementById("main-content").style.display = "none";
+        document.getElementById("password-input").value = "";
+        document.getElementById("auth-message").innerHTML = "";
+        localStorage.removeItem("authenticated");
+      }
+
+      // Update habits list
+      function updateHabitsList() {
+        const habitsList = document.getElementById("habits-list");
+        const filteredHabits = getFilteredHabits();
+
+        habitsList.innerHTML = filteredHabits
+          .map((habit) => {
+            const statusEmoji =
+              {
+                completed: "✅",
+                in_progress: "🔄",
+                pending: "⏳",
+              }[habit.status] || "⏳";
+
+            const isSelected = selectedHabit === habit.id;
+
+            return `
+                    <div class="habit-item ${
+                      isSelected ? "selected" : ""
+                    }" onclick="selectHabit(${habit.id})">
+                        <div>${habit.emoji} ${habit.name}</div>
+                        <div class="habit-status">${statusEmoji} Streak: ${
+              habit.streak
+            } days</div>
+                    </div>
+                `;
+          })
+          .join("");
+      }
+
+      // Get filtered habits
+      function getFilteredHabits() {
+        let filtered = habits;
+
+        const categoryFilter = document.getElementById("category-filter").value;
+        const statusFilter = document.getElementById("status-filter").value;
+
+        if (categoryFilter) {
+          filtered = filtered.filter((h) => h.category === categoryFilter);
+        }
+
+        if (statusFilter) {
+          filtered = filtered.filter((h) => h.status === statusFilter);
+        }
+
+        return filtered;
+      }
+
+      // Populate category filter
+      function populateCategoryFilter() {
+        const categories = [...new Set(habits.map((h) => h.category))];
+        const select = document.getElementById("category-filter");
+
+        categories.forEach((category) => {
+          const option = document.createElement("option");
+          option.value = category;
+          option.textContent = category;
+          select.appendChild(option);
+        });
+      }
+
+      // Filter habits
+      function filterHabits() {
+        updateHabitsList();
+      }
+
+      // Select habit
+      function selectHabit(habitId) {
+        selectedHabit = habitId;
+        currentView = "habit_detail";
+        updateHabitsList();
+        showHabitDetail();
+      }
+
+      // Show dashboard
+      function showDashboard() {
+        currentView = "dashboard";
+        selectedHabit = null;
+        updateHabitsList();
+        document.getElementById("dashboard-view").style.display = "block";
+        document.getElementById("habit-detail-view").style.display = "none";
+      }
+
+      // Show habit detail
+      function showHabitDetail() {
+        const habit = habits.find((h) => h.id === selectedHabit);
+        if (!habit) return;
+
+        document.getElementById("dashboard-view").style.display = "none";
+        document.getElementById("habit-detail-view").style.display = "block";
+
+        const detailContent = document.getElementById("habit-detail-content");
+        detailContent.innerHTML = `
+                <h3>${habit.emoji} ${habit.name}</h3>
+                <p><strong>Category:</strong> ${habit.category}</p>
+                <p><strong>Status:</strong> ${habit.status}</p>
+                <p><strong>Streak:</strong> ${habit.streak} days</p>
+                <p><strong>Target Time:</strong> ${habit.target_time}</p>
+                
+                <h4>Atomic Habits Framework</h4>
+                <div class="atomic-habits">
+                    <div class="atomic-card">
+                        <h5>🎯 Cue (Trigger)</h5>
+                        <p>${habit.cue}</p>
+                    </div>
+                    <div class="atomic-card">
+                        <h5>💭 Craving (Motivation)</h5>
+                        <p>${habit.craving}</p>
+                    </div>
+                    <div class="atomic-card">
+                        <h5>⚡ Response (Action)</h5>
+                        <p>${habit.response}</p>
+                    </div>
+                    <div class="atomic-card">
+                        <h5>🎁 Reward</h5>
+                        <p>${habit.reward}</p>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 2rem;">
+                    <button class="btn" onclick="updateHabitStatus(${habit.id}, 'completed')">✅ Mark Complete</button>
+                    <button class="btn btn-secondary" onclick="updateHabitStatus(${habit.id}, 'in_progress')">🔄 Mark In Progress</button>
+                    <button class="btn btn-secondary" onclick="updateHabitStatus(${habit.id}, 'pending')">⏳ Mark Pending</button>
+                </div>
+            `;
+      }
+
+      // Update habit status
+      function updateHabitStatus(habitId, status) {
+        const habit = habits.find((h) => h.id === habitId);
+        if (habit) {
+          habit.status = status;
+          if (status === "completed") {
+            habit.streak += 1;
+          }
+          localStorage.setItem("habits", JSON.stringify(habits));
+          updateHabitsList();
+          updateDashboard();
+          if (currentView === "habit_detail") {
+            showHabitDetail();
+          }
+        }
+      }
+
+      // Update dashboard
+      function updateDashboard() {
+        const completed = habits.filter((h) => h.status === "completed").length;
+        const total = habits.length;
+        const completionRate = Math.round((completed / total) * 100);
+
+        document.getElementById("active-habits").textContent = total;
+        document.getElementById("completion-rate").textContent =
+          completionRate + "%";
+
+        // Update today's habits
+        const todaysHabits = document.getElementById("todays-habits");
+        todaysHabits.innerHTML = habits
+          .map((habit) => {
+            const statusEmoji =
+              {
+                completed: "✅",
+                in_progress: "🔄",
+                pending: "⏳",
+              }[habit.status] || "⏳";
+
+            return `
+                    <div class="habit-item" onclick="selectHabit(${habit.id})">
+                        <div>${habit.emoji} ${habit.name}</div>
+                        <div class="habit-status">${statusEmoji} ${habit.status} - Streak: ${habit.streak} days</div>
+                    </div>
+                `;
+          })
+          .join("");
+      }
+
+      // Add new habit (placeholder)
+      function showAddHabit() {
+        alert(
+          "Add habit functionality will be implemented in the React version!"
+        );
+      }
+
+      // Check if already authenticated
+      if (localStorage.getItem("authenticated") === "true") {
+        document.getElementById("auth-screen").style.display = "none";
+        document.getElementById("main-content").style.display = "block";
+        init();
+      }
+
+      // Enter key for password
+      document
+        .getElementById("password-input")
+        .addEventListener("keypress", function (e) {
+          if (e.key === "Enter") {
+            authenticate();
+          }
+        });
+    </script>
+  </body>
+</html>
