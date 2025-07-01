@@ -1,0 +1,23 @@
+ * Serving Flask app 'garmin_api'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 127-766-714
+127.0.0.1 - - [01/Jul/2025 20:41:38] "OPTIONS /garmin/login HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jul/2025 20:41:39] "[31m[1mPOST /garmin/login HTTP/1.1[0m" 401 -
+127.0.0.1 - - [01/Jul/2025 20:41:51] "GET /garmin/status HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jul/2025 20:41:54] "OPTIONS /garmin/login HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jul/2025 20:41:55] "[31m[1mPOST /garmin/login HTTP/1.1[0m" 401 -
+127.0.0.1 - - [01/Jul/2025 20:41:55] "[31m[1mPOST /garmin/login HTTP/1.1[0m" 401 -
+127.0.0.1 - - [01/Jul/2025 20:41:56] "[31m[1mPOST /garmin/login HTTP/1.1[0m" 401 -
+ * Detected change in '/Users/Tom/tt_modular_sdk/projects/project_consistency/garmin_api.py', reloading
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 127-766-714
+127.0.0.1 - - [01/Jul/2025 20:42:03] "OPTIONS /garmin/login HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jul/2025 20:42:04] "[31m[1mPOST /garmin/login HTTP/1.1[0m" 401 -
+/opt/homebrew/Cellar/python@3.13/3.13.3/Frameworks/Python.framework/Versions/3.13/lib/python3.13/multiprocessing/resource_tracker.py:301: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown: {'/mp-w97zs3bm'}
+  warnings.warn(

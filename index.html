@@ -405,6 +405,49 @@
                   <div class="metric-label">Reflection Streak</div>
                 </div>
               </div>
+              <h3>🏃‍♂️ Garmin Connect</h3>
+              <div id="garmin-section">
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                  <div id="garmin-login-form">
+                    <h4>Connect to Garmin</h4>
+                    <div style="margin-bottom: 1rem;">
+                      <input type="email" id="garmin-email" placeholder="Garmin Connect Email" style="width: 100%; padding: 8px; margin-bottom: 0.5rem; border-radius: 4px; border: 1px solid #dee2e6;">
+                      <input type="password" id="garmin-password" placeholder="Garmin Connect Password" style="width: 100%; padding: 8px; margin-bottom: 0.5rem; border-radius: 4px; border: 1px solid #dee2e6;">
+                    </div>
+                    <button class="btn" onclick="connectGarmin()">🔗 Connect Garmin</button>
+                    <button class="btn btn-secondary" onclick="syncGarminData()" id="sync-btn" disabled>🔄 Sync Data</button>
+                  </div>
+                  <div id="garmin-status"></div>
+                  <div id="garmin-data-display"></div>
+                </div>
+              </div>
+
+              <h3>📝 Daily Log</h3>
+              <div id="daily-log-section">
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                  <button class="btn" onclick="showDailyLogForm()" style="margin-bottom: 1rem;">✍️ Log Today</button>
+                  <div id="daily-log-form" style="display: none;">
+                    <div style="margin-bottom: 1rem;">
+                      <label>Mood (1-10):</label>
+                      <input type="range" id="mood-slider" min="1" max="10" value="5" style="width: 100%;">
+                      <div id="mood-value">5</div>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                      <label>Energy (1-10):</label>
+                      <input type="range" id="energy-slider" min="1" max="10" value="5" style="width: 100%;">
+                      <div id="energy-value">5</div>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                      <label>Notes:</label>
+                      <textarea id="daily-notes" placeholder="How was your day?" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #dee2e6;"></textarea>
+                    </div>
+                    <button class="btn" onclick="saveDailyLog()">💾 Save Log</button>
+                    <button class="btn btn-secondary" onclick="hideDailyLogForm()">❌ Cancel</button>
+                  </div>
+                  <div id="todays-log-display"></div>
+                </div>
+              </div>
+
               <h3>📅 Today's Habits</h3>
               <div id="todays-habits"></div>
             </div>
@@ -418,7 +461,15 @@
       </div>
     </div>
 
+    <!-- Supabase client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <script>
+      // Initialize Supabase client
+      const supabaseUrl = 'https://bsyyvvaytupjuxwecwrq.supabase.co'
+      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzeXl2dmF5dHVwanV4d2Vjd3JxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzOTI3OTcsImV4cCI6MjA2Njk2ODc5N30.2GjiRkul9y3XT_IFDYhYsUz0cb7TDBqbAugO5cZHxm4'
+      const supabase = window.supabase.createClient(supabaseUrl, supabaseKey)
+
       // Sample data (same as your Streamlit app)
       const SAMPLE_HABITS = [
         {
@@ -515,19 +566,111 @@
       ];
 
       // App state
-      let habits = JSON.parse(localStorage.getItem("habits")) || SAMPLE_HABITS;
+      let habits = [];
       let selectedHabit = null;
       let currentView = "dashboard";
 
+      // Database functions
+      async function loadHabits() {
+        try {
+          const { data, error } = await supabase
+            .from('habits')
+            .select('*')
+            .order('created_at', { ascending: true });
+          
+          if (error) {
+            console.error('Error loading habits:', error);
+            habits = SAMPLE_HABITS; // Fallback to sample data
+            await initializeSampleData();
+          } else if (data.length === 0) {
+            // No habits in database, initialize with sample data
+            await initializeSampleData();
+          } else {
+            habits = data;
+          }
+        } catch (err) {
+          console.error('Network error:', err);
+          habits = SAMPLE_HABITS; // Fallback to sample data
+        }
+      }
+
+      async function initializeSampleData() {
+        try {
+          // Convert sample data to database format
+          const habitsToInsert = SAMPLE_HABITS.map(habit => ({
+            name: habit.name,
+            description: `${habit.cue} | ${habit.craving} | ${habit.response} | ${habit.reward}`,
+            category: habit.category,
+            target_frequency: 1,
+            frequency_type: 'daily'
+          }));
+
+          const { data, error } = await supabase
+            .from('habits')
+            .insert(habitsToInsert)
+            .select();
+
+          if (error) {
+            console.error('Error inserting sample data:', error);
+            habits = SAMPLE_HABITS;
+          } else {
+            habits = data.map((habit, index) => ({
+              ...SAMPLE_HABITS[index],
+              id: habit.id
+            }));
+          }
+        } catch (err) {
+          console.error('Error initializing sample data:', err);
+          habits = SAMPLE_HABITS;
+        }
+      }
+
+      async function saveHabitLog(habitId, status, notes = '') {
+        try {
+          const { error } = await supabase
+            .from('habit_logs')
+            .insert({
+              habit_id: habitId,
+              notes: notes,
+              value: status === 'completed' ? 1 : 0
+            });
+
+          if (error) {
+            console.error('Error saving habit log:', error);
+          }
+        } catch (err) {
+          console.error('Error saving habit log:', err);
+        }
+      }
+
+      async function loadTodaysDailyLog() {
+        try {
+          const today = new Date().toISOString().split('T')[0];
+          const { data, error } = await supabase
+            .from('daily_logs')
+            .select('*')
+            .eq('date', today)
+            .single();
+
+          return data;
+        } catch (err) {
+          console.error('Error loading daily log:', err);
+          return null;
+        }
+      }
+
       // Initialize app
-      function init() {
+      async function init() {
+        await loadHabits();
         updateHabitsList();
         updateDashboard();
         populateCategoryFilter();
+        await loadTodaysLog();
+        await loadGarminData(); // Load any existing Garmin data
       }
 
       // Authentication
-      function authenticate() {
+      async function authenticate() {
         const password = document.getElementById("password-input").value;
         const messageEl = document.getElementById("auth-message");
 
@@ -537,7 +680,7 @@
           messageEl.innerHTML =
             '<div class="success">✅ Access granted! Welcome to your habit tracker.</div>';
           localStorage.setItem("authenticated", "true");
-          init();
+          await init();
         } else {
           messageEl.innerHTML =
             '<div class="error">❌ Incorrect password. Please try again.</div>';
@@ -681,14 +824,19 @@
       }
 
       // Update habit status
-      function updateHabitStatus(habitId, status) {
+      async function updateHabitStatus(habitId, status) {
         const habit = habits.find((h) => h.id === habitId);
         if (habit) {
+          // Update local state
           habit.status = status;
           if (status === "completed") {
             habit.streak += 1;
           }
-          localStorage.setItem("habits", JSON.stringify(habits));
+          
+          // Save to database
+          await saveHabitLog(habitId, status);
+          
+          // Update UI
           updateHabitsList();
           updateDashboard();
           if (currentView === "habit_detail") {
@@ -726,6 +874,228 @@
                 `;
           })
           .join("");
+      }
+
+      // Daily logging functions
+      function showDailyLogForm() {
+        document.getElementById('daily-log-form').style.display = 'block';
+        
+        // Add event listeners for sliders
+        const moodSlider = document.getElementById('mood-slider');
+        const energySlider = document.getElementById('energy-slider');
+        
+        moodSlider.addEventListener('input', () => {
+          document.getElementById('mood-value').textContent = moodSlider.value;
+        });
+        
+        energySlider.addEventListener('input', () => {
+          document.getElementById('energy-value').textContent = energySlider.value;
+        });
+      }
+
+      function hideDailyLogForm() {
+        document.getElementById('daily-log-form').style.display = 'none';
+      }
+
+      async function saveDailyLog() {
+        const mood = document.getElementById('mood-slider').value;
+        const energy = document.getElementById('energy-slider').value;
+        const notes = document.getElementById('daily-notes').value;
+        const today = new Date().toISOString().split('T')[0];
+
+        try {
+          const { data, error } = await supabase
+            .from('daily_logs')
+            .upsert({
+              date: today,
+              mood: parseInt(mood),
+              energy: parseInt(energy),
+              notes: notes
+            });
+
+          if (error) {
+            console.error('Error saving daily log:', error);
+            alert('Error saving daily log!');
+          } else {
+            alert('Daily log saved successfully! 📝');
+            hideDailyLogForm();
+            await loadTodaysLog();
+          }
+        } catch (err) {
+          console.error('Error saving daily log:', err);
+          alert('Error saving daily log!');
+        }
+      }
+
+      async function loadTodaysLog() {
+        const log = await loadTodaysDailyLog();
+        const display = document.getElementById('todays-log-display');
+        
+        if (log) {
+          display.innerHTML = `
+            <div style="margin-top: 1rem; padding: 1rem; background: white; border-radius: 8px;">
+              <h4>Today's Log</h4>
+              <p><strong>Mood:</strong> ${log.mood}/10</p>
+              <p><strong>Energy:</strong> ${log.energy}/10</p>
+              <p><strong>Notes:</strong> ${log.notes || 'No notes'}</p>
+            </div>
+          `;
+        } else {
+          display.innerHTML = '<p style="color: #6c757d; font-style: italic;">No log for today yet.</p>';
+        }
+      }
+
+      // Garmin integration functions
+      const GARMIN_API_BASE = 'http://127.0.0.1:5000';
+
+      async function connectGarmin() {
+        const email = document.getElementById('garmin-email').value;
+        const password = document.getElementById('garmin-password').value;
+        
+        if (!email || !password) {
+          alert('Please enter both email and password');
+          return;
+        }
+        
+        try {
+          const response = await fetch(`${GARMIN_API_BASE}/garmin/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          
+          const result = await response.json();
+          
+          if (response.ok) {
+            document.getElementById('garmin-status').innerHTML = 
+              '<div style="color: #28a745; margin-top: 1rem;">✅ Connected to Garmin Connect!</div>';
+            document.getElementById('sync-btn').disabled = false;
+            // Clear password for security
+            document.getElementById('garmin-password').value = '';
+          } else {
+            document.getElementById('garmin-status').innerHTML = 
+              `<div style="color: #dc3545; margin-top: 1rem;">❌ ${result.error}</div>`;
+          }
+        } catch (error) {
+          document.getElementById('garmin-status').innerHTML = 
+            '<div style="color: #dc3545; margin-top: 1rem;">❌ Failed to connect. Make sure the API server is running.</div>';
+        }
+      }
+
+      async function syncGarminData() {
+        try {
+          document.getElementById('garmin-status').innerHTML = 
+            '<div style="color: #007bff; margin-top: 1rem;">🔄 Syncing Garmin data...</div>';
+            
+          const response = await fetch(`${GARMIN_API_BASE}/garmin/sync`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          
+          const result = await response.json();
+          
+          if (response.ok) {
+            document.getElementById('garmin-status').innerHTML = 
+              `<div style="color: #28a745; margin-top: 1rem;">✅ ${result.message}</div>`;
+            await loadGarminData();
+            updateDashboardWithGarminData();
+          } else {
+            document.getElementById('garmin-status').innerHTML = 
+              `<div style="color: #dc3545; margin-top: 1rem;">❌ ${result.error}</div>`;
+          }
+        } catch (error) {
+          document.getElementById('garmin-status').innerHTML = 
+            '<div style="color: #dc3545; margin-top: 1rem;">❌ Failed to sync data.</div>';
+        }
+      }
+
+      async function loadGarminData() {
+        try {
+          const response = await fetch(`${GARMIN_API_BASE}/garmin/latest-data`);
+          const data = await response.json();
+          
+          if (response.ok) {
+            displayGarminData(data);
+          }
+        } catch (error) {
+          console.error('Failed to load Garmin data:', error);
+        }
+      }
+
+      function displayGarminData(data) {
+        const display = document.getElementById('garmin-data-display');
+        
+        let html = '<h4>Latest Garmin Data</h4><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">';
+        
+        // Sleep data
+        if (data.sleep) {
+          const sleep = data.sleep;
+          html += `
+            <div style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #dee2e6;">
+              <h5>😴 Sleep (${sleep.date})</h5>
+              <p><strong>Duration:</strong> ${Math.floor(sleep.duration_minutes / 60)}h ${sleep.duration_minutes % 60}m</p>
+              <p><strong>Deep Sleep:</strong> ${Math.floor(sleep.deep_sleep_minutes / 60)}h ${sleep.deep_sleep_minutes % 60}m</p>
+              <p><strong>REM Sleep:</strong> ${Math.floor(sleep.rem_sleep_minutes / 60)}h ${sleep.rem_sleep_minutes % 60}m</p>
+              ${sleep.sleep_score ? `<p><strong>Score:</strong> ${sleep.sleep_score}/100</p>` : ''}
+            </div>
+          `;
+        }
+        
+        // Steps data
+        if (data.steps) {
+          const steps = data.steps;
+          html += `
+            <div style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #dee2e6;">
+              <h5>👟 Steps (${steps.date})</h5>
+              <p><strong>Steps:</strong> ${steps.steps.toLocaleString()}</p>
+              <p><strong>Goal:</strong> ${steps.goal.toLocaleString()}</p>
+              <p><strong>Distance:</strong> ${(steps.distance_meters / 1000).toFixed(1)} km</p>
+              ${steps.floors_climbed ? `<p><strong>Floors:</strong> ${steps.floors_climbed}</p>` : ''}
+            </div>
+          `;
+        }
+        
+        // Heart rate data
+        if (data.heart_rate) {
+          const hr = data.heart_rate;
+          html += `
+            <div style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #dee2e6;">
+              <h5>❤️ Heart Rate (${hr.date})</h5>
+              ${hr.resting_hr ? `<p><strong>Resting HR:</strong> ${hr.resting_hr} bpm</p>` : ''}
+              ${hr.avg_hr ? `<p><strong>Average HR:</strong> ${hr.avg_hr} bpm</p>` : ''}
+              ${hr.max_hr ? `<p><strong>Max HR:</strong> ${hr.max_hr} bpm</p>` : ''}
+            </div>
+          `;
+        }
+        
+        // Recent activities
+        if (data.recent_activities && data.recent_activities.length > 0) {
+          html += `
+            <div style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #dee2e6;">
+              <h5>🏃‍♂️ Recent Activities</h5>
+          `;
+          data.recent_activities.slice(0, 3).forEach(activity => {
+            html += `
+              <div style="margin-bottom: 0.5rem; padding: 0.5rem; background: #f8f9fa; border-radius: 4px;">
+                <strong>${activity.activity_type}</strong><br>
+                <small>${activity.date} - ${activity.duration_minutes}min</small>
+                ${activity.distance_meters ? `<br><small>${(activity.distance_meters / 1000).toFixed(1)}km</small>` : ''}
+              </div>
+            `;
+          });
+          html += '</div>';
+        }
+        
+        html += '</div>';
+        display.innerHTML = html;
+      }
+
+      function updateDashboardWithGarminData() {
+        // Update dashboard metrics with Garmin data
+        loadGarminData().then(() => {
+          // This could update the dashboard metrics with real Garmin data
+          // For now, we'll keep the existing dashboard logic
+        });
       }
 
       // Add new habit (placeholder)
